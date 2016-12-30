@@ -1,11 +1,13 @@
 package tiger.com.carecup;
 
 import android.content.Context;
+import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,7 +46,13 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
                     lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                     if (!loading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                         if (onLoadMoreListener != null) {
-                            onLoadMoreListener.onLoadMore();
+                            new Handler().post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    onLoadMoreListener.onLoadMore();
+                                }
+                            });
+
                         }
                     }
                 }
@@ -90,10 +98,12 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
     public static class QuestionViewHolder extends RecyclerView.ViewHolder {
         public TextView textView;
         public CupcarrerQuestion question;
+       // public WebView webView;
 
         public QuestionViewHolder(View v) {
             super(v);
             textView = (TextView)v.findViewById(R.id.subject_card_textview);
+       //     webView = (WebView) v.findViewById(R.id.subject_card_webView);
 
             textView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -136,6 +146,8 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof QuestionViewHolder) {
             ((QuestionViewHolder) holder).textView.setText(questions.get(position).detail);
+         //   ((QuestionViewHolder) holder).textView.setVisibility(View.GONE);
+           // ((QuestionViewHolder) holder).webView.loadData(questions.get(position).detail, "text/html", null);
             ((QuestionViewHolder) holder).question = questions.get(position);
         } else {
             ((ProgressViewHolder)holder).progressBar.setIndeterminate(true);
