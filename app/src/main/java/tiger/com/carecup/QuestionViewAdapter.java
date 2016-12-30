@@ -1,10 +1,12 @@
 package tiger.com.carecup;
 
 import android.content.Context;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,25 +22,76 @@ import java.util.ArrayList;
 public class QuestionViewAdapter extends RecyclerView.Adapter {
     ArrayList<CupcarrerQuestion> questions = new ArrayList<>();
     Context context;
-    View view;
-    ViewHolder viewHolder;
 
-    public QuestionViewAdapter(Context context) {
+
+    private final int VIEWPROG = 0;
+    private final int VIEWQUESTION = 1;
+    private int visibleThreshold = 5;
+    private int lastVisibleItem, totalItemCount;
+    private boolean loading;
+    private OnLoadMoreListener onLoadMoreListener;
+
+    public QuestionViewAdapter(Context context, RecyclerView recyclerView) {
         this.context = context;
+
+        if (recyclerView.getLayoutManager() instanceof LinearLayoutManager) {
+            final LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    totalItemCount = linearLayoutManager.getItemCount();
+                    lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+                    if (!loading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                        if (onLoadMoreListener != null) {
+                            onLoadMoreListener.onLoadMore();
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+
+
+    @Override
+    public int getItemViewType(int position) {
+        if (questions.get(position) == null) {
+            return VIEWPROG;
+        } else {
+            return VIEWQUESTION;
+        }
+    }
+
+    public void onLoading(){
+        loading = true;
+        questions.add(null);
+        notifyItemInserted(questions.size()-1);
+    }
+
+    public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+        this.onLoadMoreListener = onLoadMoreListener;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        view = LayoutInflater.from(context).inflate(R.layout.quesiton_item, parent, false);
-        viewHolder = new ViewHolder(view);
-        return viewHolder;
+        RecyclerView.ViewHolder viewHolder;
+        if (viewType == VIEWQUESTION) {
+            View v = LayoutInflater.from(context).inflate(R.layout.quesiton_item, parent, false);
+            viewHolder = new QuestionViewHolder(v);
+            return viewHolder;
+        } else {
+            View v = LayoutInflater.from(context).inflate(R.layout.progress_item, parent,false);
+            viewHolder = new ProgressViewHolder(v);
+            return viewHolder;
+        }
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class QuestionViewHolder extends RecyclerView.ViewHolder {
         public TextView textView;
         public CupcarrerQuestion question;
 
-        public ViewHolder (View v) {
+        public QuestionViewHolder(View v) {
             super(v);
             textView = (TextView)v.findViewById(R.id.subject_textview);
 
@@ -52,28 +105,44 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
         }
     }
 
-    public void addNewQuestion(CupcarrerQuestion question) {
-        questions.add(question);
-        notifyDataSetChanged();
+    public static class ProgressViewHolder extends  RecyclerView.ViewHolder {
+        public ProgressBar progressBar;
+
+        public ProgressViewHolder(View v) {
+            super(v);
+            progressBar = (ProgressBar)v.findViewById(R.id.progressBar);
+        }
     }
 
+
     public void addBatchQuestions(JSONArray newQuestions) {
-            try {
-                for (int i = 0; i < newQuestions.length(); i++) {
-                    questions.add((CupcarrerQuestion) newQuestions.get(i));
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
+        if (loading) {
+            loading = false;
+            questions.remove(questions.size() - 1);
+        }
+
+        try {
+            for (int i = 0; i < newQuestions.length(); i++) {
+                questions.add((CupcarrerQuestion) newQuestions.get(i));
             }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         notifyDataSetChanged();
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((ViewHolder)holder).textView.setText(questions.get(position).detail);
-        ((ViewHolder)holder).question = questions.get(position);
+        if (holder instanceof QuestionViewHolder) {
+            ((QuestionViewHolder) holder).textView.setText(questions.get(position).detail);
+            ((QuestionViewHolder) holder).question = questions.get(position);
+        } else {
+            ((ProgressViewHolder)holder).progressBar.setIndeterminate(true);
+        }
     }
+
+
 
     @Override
     public int getItemCount() {
@@ -82,3 +151,4 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
 
 
 }
+

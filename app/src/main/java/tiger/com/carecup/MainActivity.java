@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     QuestionViewAdapter adapter;
     RecyclerView.LayoutManager questionLayoutManager;
     RecyclerView questionView;
+    int page = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,18 +66,26 @@ public class MainActivity extends AppCompatActivity {
         });*/
         //txtView = (TextView) findViewById(R.id.txt);
 
-
-        questionLayoutManager = new LinearLayoutManager(getApplicationContext());
         questionView = (RecyclerView) findViewById(R.id.recyclerview1);
-        relativeLayout = (RelativeLayout) findViewById(R.id.content_main);
-        adapter = new QuestionViewAdapter(getApplicationContext());
+        questionLayoutManager = new LinearLayoutManager(getApplicationContext());
         questionView.setLayoutManager(questionLayoutManager);
+
+        relativeLayout = (RelativeLayout) findViewById(R.id.content_main);
+        adapter = new QuestionViewAdapter(getApplicationContext(), questionView);
+
 
         questionView.setAdapter(adapter);
         questionView.addItemDecoration(new DividerItemDecoration(getApplicationContext(), DividerItemDecoration.VERTICAL));
-        pullPageData(adapter, 2);
 
+        pullPageData(adapter, page++);
+        adapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                adapter.onLoading();
+                pullPageData(adapter, page++);
 
+            }
+        });
     }
 
     void pullPageData(QuestionViewAdapter adapter, int pageNum) {
