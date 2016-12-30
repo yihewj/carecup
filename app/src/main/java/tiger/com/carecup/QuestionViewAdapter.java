@@ -77,7 +77,7 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         RecyclerView.ViewHolder viewHolder;
         if (viewType == VIEWQUESTION) {
-            View v = LayoutInflater.from(context).inflate(R.layout.quesiton_item, parent, false);
+            View v = LayoutInflater.from(context).inflate(R.layout.question_cards_item, parent, false);
             viewHolder = new QuestionViewHolder(v);
             return viewHolder;
         } else {
@@ -93,7 +93,7 @@ public class QuestionViewAdapter extends RecyclerView.Adapter {
 
         public QuestionViewHolder(View v) {
             super(v);
-            textView = (TextView)v.findViewById(R.id.subject_textview);
+            textView = (TextView)v.findViewById(R.id.subject_card_textview);
 
             textView.setOnClickListener(new View.OnClickListener() {
                 @Override
